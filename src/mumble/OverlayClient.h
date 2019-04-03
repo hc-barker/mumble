@@ -8,6 +8,7 @@
 
 #include <QtCore/QUrl>
 #include <QtNetwork/QLocalSocket>
+#include <QScopedPointer>
 
 #include "Timer.h"
 #include "../../overlay/overlay.h"
@@ -27,17 +28,13 @@ class OverlayClient : public QObject {
 		Q_DISABLE_COPY(OverlayClient)
 	protected:
 		OverlayMsg omMsg;
-		QLocalSocket *qlsSocket;
-		SharedMemory2 *smMem;
-		QRect qrLast;
+        QLocalSocket *qlsSocket;
+        SharedMemory2 *smMem;
+        QRect qrLast;
 		Timer t;
 
 		float framesPerSecond;
 		int iOffsetX, iOffsetY;
-		QGraphicsPixmapItem *qgpiCursor;
-		QGraphicsPixmapItem *qgpiLogo;
-		OverlayPositionableItem *qgpiFPS;
-		OverlayPositionableItem *qgpiTime;
 
 		/// The process ID of the process this OverlayClient is connected to.
 		quint64 uiPid;
@@ -45,6 +42,12 @@ class OverlayClient : public QObject {
 		QString qsExecutablePath;
 
 		QGraphicsScene qgs;
+
+        QScopedPointer<QGraphicsPixmapItem> qgpiCursor;
+        QScopedPointer<QGraphicsPixmapItem> qgpiLogo;
+        QScopedPointer<OverlayPositionableItem> qgpiFPS;
+        QScopedPointer<OverlayPositionableItem> qgpiTime;
+
 		OverlayUserGroup ougUsers;
 
 #ifdef Q_OS_MAC

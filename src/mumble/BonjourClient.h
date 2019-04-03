@@ -7,6 +7,7 @@
 #define MUMBLE_MUMBLE_BONJOURCLIENT_H_
 
 #include <QtCore/QObject>
+#include <QScopedPointer>
 
 class BonjourServiceBrowser;
 class BonjourServiceResolver;
@@ -19,8 +20,8 @@ class BonjourClient : public QObject {
 		BonjourClient();
 		~BonjourClient() Q_DECL_OVERRIDE;
 
-		BonjourServiceBrowser *bsbBrowser;
-		BonjourServiceResolver *bsrResolver;
+        QScopedPointer<BonjourServiceBrowser> bsbBrowser;
+        QScopedPointer<BonjourServiceResolver> bsrResolver;
 };
 
 #endif

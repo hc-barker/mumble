@@ -24,18 +24,18 @@
 
 OverlayClient::OverlayClient(QLocalSocket *socket, QObject *p)
 	: QObject(p)
-	, framesPerSecond(0)
-	, ougUsers(&g.s.os)
+    , framesPerSecond(0)
+    , ougUsers(&g.s.os)
 	, iMouseX(0)
-	, iMouseY(0) {
+    , iMouseY(0) {
 	
 	qlsSocket = socket;
 	qlsSocket->setParent(NULL);
 	connect(qlsSocket, SIGNAL(readyRead()), this, SLOT(readyRead()));
 
 	omMsg.omh.iLength = -1;
-	smMem = NULL;
-	uiWidth = uiHeight = 0;
+    smMem = NULL;
+    uiWidth = uiHeight = 0;
 
 	uiPid = ~0ULL;
 
@@ -49,7 +49,7 @@ OverlayClient::OverlayClient(QLocalSocket *socket, QObject *p)
 	// Make sure it has a native window id
 	qgv.winId();
 
-	qgpiCursor = new OverlayMouse();
+    qgpiCursor.reset(new OverlayMouse());
 	qgpiCursor->hide();
 	qgpiCursor->setZValue(10.0f);
 
@@ -57,18 +57,16 @@ OverlayClient::OverlayClient(QLocalSocket *socket, QObject *p)
 	qgs.addItem(&ougUsers);
 	ougUsers.show();
 
-	qgpiFPS = new OverlayPositionableItem(&g.s.os.qrfFps);
-	qgs.addItem(qgpiFPS);
+    qgpiFPS.reset(new OverlayPositionableItem(&g.s.os.qrfFps));
+    qgs.addItem(qgpiFPS.data());
 	qgpiFPS->setPos(g.s.os.qrfFps.x(), g.s.os.qrfFps.y());
 	qgpiFPS->show();
 
 	// Time
-	qgpiTime = new OverlayPositionableItem(&g.s.os.qrfTime);
-	qgs.addItem(qgpiTime);
+    qgpiTime.reset(new OverlayPositionableItem(&g.s.os.qrfTime));
+    qgs.addItem(qgpiTime.data());
 	qgpiTime->setPos(g.s.os.qrfTime.x(), g.s.os.qrfTime.y());
 	qgpiTime->show();
-
-	qgpiLogo = NULL;
 
 	iOffsetX = iOffsetY = 0;
 
@@ -76,11 +74,6 @@ OverlayClient::OverlayClient(QLocalSocket *socket, QObject *p)
 }
 
 OverlayClient::~OverlayClient() {
-	delete qgpiFPS;
-	delete qgpiTime;
-	delete qgpiCursor;
-	delete qgpiLogo;
-
 	qlsSocket->disconnectFromServer();
 	if (!qlsSocket->waitForDisconnected(1000)) {
 		qDebug() << "OverlayClient: Failed to cleanly disconnect: " << qlsSocket->errorString();
@@ -397,14 +390,14 @@ void OverlayClient::readyReadMsgInit(unsigned int length) {
 	uiHeight = omi->uiHeight;
 	qrLast = QRect();
 
-	delete smMem;
+    delete smMem;
 
-	smMem = new SharedMemory2(this, uiWidth * uiHeight * 4);
-	if (! smMem->data()) {
+    smMem = new SharedMemory2(this, uiWidth * uiHeight * 4);
+    if (! smMem->data()) {
 		qWarning() << "OverlayClient: Failed to create shared memory" << uiWidth << uiHeight;
-		delete smMem;
-		smMem = NULL;
-		return;
+        delete smMem;
+        smMem = NULL;
+        return;
 	}
 	QByteArray key = smMem->name().toUtf8();
 	key.append(static_cast<char>(0));
@@ -504,8 +497,7 @@ void OverlayClient::reset() {
 	if (! uiWidth || ! uiHeight || ! smMem)
 		return;
 
-	delete qgpiLogo;
-	qgpiLogo = NULL;
+    qgpiLogo.reset();
 
 	ougUsers.reset();
 
@@ -517,8 +509,8 @@ void OverlayClient::setupScene(bool show) {
 		qgs.setBackgroundBrush(QColor(0,0,0,64));
 
 		if (! qgpiLogo) {
-			qgpiLogo = new OverlayMouse();
-			qgpiLogo->hide();
+            qgpiLogo.reset(new OverlayMouse());
+            qgpiLogo->hide();
 			qgpiLogo->setOpacity(0.8f);
 			qgpiLogo->setZValue(-5.0f);
 
@@ -536,20 +528,20 @@ void OverlayClient::setupScene(bool show) {
 		}
 
 		qgpiCursor->show();
-		qgs.addItem(qgpiCursor);
+        qgs.addItem(qgpiCursor.data());
 
 		qgpiLogo->show();
-		qgs.addItem(qgpiLogo);
+        qgs.addItem(qgpiLogo.data());
 	} else {
 		qgs.setBackgroundBrush(Qt::NoBrush);
 
 		if (qgpiCursor->scene())
-			qgs.removeItem(qgpiCursor);
+            qgs.removeItem(qgpiCursor.data());
 		qgpiCursor->hide();
 
 		if (qgpiLogo) {
 			if (qgpiLogo->scene())
-				qgs.removeItem(qgpiLogo);
+                qgs.removeItem(qgpiLogo.data());
 			qgpiLogo->hide();
 		}
 
@@ -657,7 +649,7 @@ void OverlayClient::render() {
 		om.omb.x = dirty.x();
 		om.omb.y = dirty.y();
 		om.omb.w = dirty.width();
-		om.omb.h = dirty.height();
+        om.omb.h = dirty.height();
 		qlsSocket->write(om.headerbuffer, sizeof(OverlayMsgHeader) + sizeof(OverlayMsgBlit));
 	}
 

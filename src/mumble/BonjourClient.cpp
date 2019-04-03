@@ -3,6 +3,8 @@
 // that can be found in the LICENSE file at the root of the
 // Mumble source tree or at <https://www.mumble.info/LICENSE>.
 
+#include <memory>
+
 #include "mumble_pch.hpp"
 
 #include "BonjourClient.h"
@@ -11,8 +13,6 @@
 #include "BonjourServiceResolver.h"
 
 BonjourClient::BonjourClient() {
-	bsrResolver = NULL;
-	bsbBrowser = NULL;
 #ifdef Q_OS_WIN
 	HMODULE hLib = LoadLibrary(L"DNSSD.DLL");
 	if (hLib == NULL) {
@@ -21,13 +21,11 @@ BonjourClient::BonjourClient() {
 	}
 	FreeLibrary(hLib);
 #endif
-	bsbBrowser = new BonjourServiceBrowser(this);
-	bsbBrowser->browseForServiceType(QLatin1String("_mumble._tcp"));
-	bsrResolver = new BonjourServiceResolver(this);
+    bsbBrowser.reset(new BonjourServiceBrowser(this));
+    bsbBrowser->browseForServiceType(QLatin1String("_mumble._tcp"));
+    bsrResolver.reset(new BonjourServiceResolver(this));
 	return;
 }
 
 BonjourClient::~BonjourClient() {
-	delete bsbBrowser;
-	delete bsrResolver;
 }
